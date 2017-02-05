@@ -1,3 +1,4 @@
+
 import trackopy
 import json
 from pprint import pprint
@@ -35,19 +36,19 @@ print('history item:')
 
 deck_list = ["Counterfeit Coin","Backstab","Preparation", "Small-Time Buccaneer", "Patches, the Pirat", "Swashburglar", "Cold Blood", "Eviscerate", "Sap","Bloodmage Thalnos", "Fan of Knives", "SI:7 Agent", "Edwin VanCleef", "Shaku, the Collector", "Tomb Pillager", "Azure Drake", "Leeroy Jenkins", "Gadgetzan Auctioneer"]
 #deck_list = ["Eviscerate"]
-#opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Midrange", "Shaman"), ("Reno", "Mage")]
-opponent_deck_type_tuples_list = [("Aggro", "Shaman")]
+opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Midrange", "Shaman"), ("Reno", "Warlock")]
+#opponent_deck_type_tuples_list = [("Aggro", "Shaman")]
 
 
 for deck_types in opponent_deck_type_tuples_list:
-    for card in deck_list:
-        hero = "Rogue"
-        hero_deck = "Miracle"
-        opponent = deck_types[1]
-        opponent_deck = deck_types[0]
-        max_turn = 10
-        #print( opponent, opponent_deck)
+    hero = "Rogue"
+    hero_deck = "Miracle"
+    opponent = deck_types[1]
+    opponent_deck = deck_types[0]
+    max_turn = 10
+    ##print( opponent_deck, opponent)
 
+    for card in deck_list:
         game_ids = []
         games_i_want_to_save = []
         number_of_total_games = 0
@@ -82,11 +83,11 @@ for deck_types in opponent_deck_type_tuples_list:
             if(number_of_valid_games > 0):
                 win_percent = (number_of_wins_with_card/number_of_valid_games)*100
             print("Win percent: {0:.2f}".format(win_percent), "%")
-            #print("--------------------------", card)
 
     print("------")
     print("Number of games", hero_deck, hero, "vs", opponent_deck, opponent, ":", number_of_total_games)
     print("Total wins:", number_of_wins)
     print("Win percent: {0:.2f}".format((number_of_wins/number_of_total_games)*100), "%")
+    print("#################################")
 
 
