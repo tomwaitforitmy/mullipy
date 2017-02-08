@@ -20,9 +20,28 @@ class Muligan(object):
             that are played after turn 5 will be ignored. If you set this to 20 or higher, all turns will be included.
     """
 
-    def __init__(self, path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn):
-        """Initialize the calculator""" 
-        self.path_to_data = path_to_data
+    def __init__(self, data_source, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn):
+        """Initialize the calculator"""
+        #Check if the user supplied data in .json format.
+        if '.json' in data_source:
+            with open(data_source) as file:
+                page = json.load(file)
+            #Standard history page contains stuff we don't need. Here we get rid of it. Todo: adapt for multiple pages.
+            if 'history' in page:
+                page = page['history']
+        #Check if we can connect to track-o-bot with the data
+        elif set(('username', 'password')).issubset(data_source):
+            print("Found username and password. Connecting to track-o-bot.com ...")
+            trackobot = trackopy.Trackobot(data_source['username'], data_source['password'])
+            page = trackobot.history()['history']
+            #pprint(page)
+        else:
+            raise Warning("From muligan.__init__: misuse of data_source.\
+                          Please supply a path to a .json file (e.g. 'C:\history.json')\
+                          or username and password for track-o-bot\
+                          (e.g. {'username': 'your_name', 'password': 'your_passowrd'}")
+
+        self.data = page
         self.deck_type = deck_type
         self.opponent_deck_type_tuples_list = opponent_deck_type_tuples_list
         if not deck_list:
@@ -36,25 +55,6 @@ class Muligan(object):
             max_turn = 9999
             print("max_turn was set to 20 or higher. Checking all turns now.")
         self.max_turn = max_turn
-
-    def evaluate(self):
-        with open(self.path_to_data) as file:
-            page = json.load(file)
-
-        #with open('E:\\Code\\Python\\trackopy\\userdata.track-o-bot.json') as file2:
-        #    userdata = json.load(file2)
-
-        # trackobot = trackopy.Trackobot(userdata['username'], userdata['password'])
-
-        # print('login ok')
-
-        print('history item:')
-        # old shit:
-        # print(len(page))
-
-        #history von trackobot
-        #pprint(page['history'][0])
-
 
 
     def find_card(self, card, game, max_turn):
@@ -135,15 +135,9 @@ class Muligan(object):
             else:
                 print("No games against", result['opponent_deck'], result['opponent'])
 
-
-
     def evaluate2(self):
-        with open(self.path_to_data) as file:
-            page = json.load(file)
 
-        if 'history' in page:
-            page = page['history']
-
+        page = self.data
         deck_list = self.deck_list
 
         #our deck
