@@ -1,11 +1,18 @@
+import json
+
 import muligan
 from pprint import pprint
 
-path_to_data = "C:\\Users\\tommy\\page08022017.json"
+#path_to_data = "C:\\Users\\tommy\\page08022017.json"
+
+with open("userdata.track-o-bot.json") as file:
+    page = json.load(file)
+
+path_to_data = page
 deck_type = ("Miracle", "Rogue")
-#deck_list = ["Counterfeit Coin","Backstab","Preparation", "Small-Time Buccaneer", "Patches, the Pirat", "Swashburglar", "Cold Blood", "Eviscerate", "Sap","Bloodmage Thalnos", "Fan of Knives", "SI:7 Agent", "Edwin VanCleef", "Shaku, the Collector", "Tomb Pillager", "Azure Drake", "Leeroy Jenkins", "Gadgetzan Auctioneer"]
-deck_list = ["Counterfeit Coin","Eviscerate"]
-opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Reno", "Warlock"), ("Pirate", "Warrior"), ("Miracle", "Rogue")]
+deck_list = ["Counterfeit Coin","Backstab","Preparation", "Small-Time Buccaneer", "Patches the Pirate", "Swashburglar", "Cold Blood", "Eviscerate", "Sap","Bloodmage Thalnos", "Fan of Knives", "SI:7 Agent", "Edwin VanCleef", "Shaku, the Collector", "Tomb Pillager", "Azure Drake", "Leeroy Jenkins", "Gadgetzan Auctioneer"]
+#deck_list = ["Counterfeit Coin","Eviscerate"]
+opponent_deck_type_tuples_list = []#[("Aggro", "Shaman")]
 max_turn = 20
 calculator = muligan.Muligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
 result_list = calculator.evaluate2()

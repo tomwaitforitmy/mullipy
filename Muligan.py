@@ -1,3 +1,4 @@
+import datetime
 import trackopy
 import json
 from pprint import pprint
@@ -23,25 +24,27 @@ class Muligan(object):
     def __init__(self, data_source, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn):
         """Initialize the calculator"""
         #Check if the user supplied data in .json format.
+        pages = [] #contains the data page(s)
         if '.json' in data_source:
             with open(data_source) as file:
                 page = json.load(file)
             #Standard history page contains stuff we don't need. Here we get rid of it. Todo: adapt for multiple pages.
             if 'history' in page:
-                page = page['history']
+                pages.append(page['history'])
+            else:
+                pages.append(page)
         #Check if we can connect to track-o-bot with the data
         elif set(('username', 'password')).issubset(data_source):
             print("Found username and password. Connecting to track-o-bot.com ...")
-            trackobot = trackopy.Trackobot(data_source['username'], data_source['password'])
-            page = trackobot.history()['history']
-            #pprint(page)
+            pages = self.get_pages_from_trackobot_page(data_source['username'], data_source['password'])
+
         else:
             raise Warning("From muligan.__init__: misuse of data_source.\
                           Please supply a path to a .json file (e.g. 'C:\history.json')\
                           or username and password for track-o-bot\
                           (e.g. {'username': 'your_name', 'password': 'your_passowrd'}")
 
-        self.data = page
+        self.data = pages
         self.deck_type = deck_type
         self.opponent_deck_type_tuples_list = opponent_deck_type_tuples_list
         if not deck_list:
@@ -56,6 +59,32 @@ class Muligan(object):
             print("max_turn was set to 20 or higher. Checking all turns now.")
         self.max_turn = max_turn
 
+    def get_pages_from_trackobot_page(self, username, password, date=None):
+        pages = []
+        if not date:
+            date = datetime.datetime.now()
+        trackobot = trackopy.Trackobot(username, password)
+        # Track-o-bot only saves the card history for 10 days.
+        # Therefore, we only search for games in last 10 days.
+        minus_ten_days = date - datetime.timedelta(days=+10)
+
+        i = 1
+        page = trackobot.history(i)['history']
+
+        while self.serach_pages_younger_than(page, minus_ten_days):
+            i += 1
+            page = trackobot.history(i)['history']
+            pages.append(page)
+        return pages
+
+    def serach_pages_younger_than(self, pages, date):
+        pages_younger_than = []
+        for page in pages:
+            if page['added'] > date.isoformat():
+                pages_younger_than.append(page)
+        if not pages_younger_than:
+            print("Page older than 10 days. No card data available.", page['added'])
+        return pages_younger_than
 
     def find_card(self, card, game, max_turn):
         #iterate over all cards used in the game
@@ -65,11 +94,12 @@ class Muligan(object):
                 return game
         return False
 
-    def find_hero_deck(self, page, hero, hero_deck):
+    def find_hero_deck(self, pages, hero, hero_deck):
         result_games = []
-        for game in page:
-            if (game["hero"] == hero) & (game["hero_deck"] == hero_deck):
-                result_games.append(game.copy())
+        for page in pages:
+            for game in page:
+                if (game["hero"] == hero) & (game["hero_deck"] == hero_deck):
+                    result_games.append(game.copy())
         return result_games
 
     def find_opponent_deck(self, page, opponent, opponent_deck):
@@ -137,7 +167,7 @@ class Muligan(object):
 
     def evaluate2(self):
 
-        page = self.data
+        pages = self.data
         deck_list = self.deck_list
 
         #our deck
@@ -155,7 +185,7 @@ class Muligan(object):
         #                       }]
 
 
-        valid_games = self.find_hero_deck(page, hero, hero_deck)
+        valid_games = self.find_hero_deck(pages, hero, hero_deck)
 
         #opponent deck(s)
         opponent_deck_type_tuples_list = self.opponent_deck_type_tuples_list
