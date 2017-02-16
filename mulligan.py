@@ -32,7 +32,7 @@ class Mulligan(object):
 
     def __init__(self, data_source, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn):
         # Check if the user supplied data in .json format.
-        pages = [] # contains the data page(s)
+        pages = []  # contains the data page(s)
         if '.json' in data_source:
             with open(data_source) as file:
                 page = json.load(file)
@@ -133,7 +133,7 @@ class Mulligan(object):
                 # check that "me" played the card and not opponent
                 if (cards['player'] == 'me') & (card in cards['card'].values()) & (cards['turn'] <= max_turn):
                     number_card_was_played += 1
-            # # number of wins????
+                    # # number of wins????
         if number_card_was_played < len(valid_games):
             raise Warning("From muligan.number_card_was_played: misuse of function.\
                           Card was not found in all games. Make sure to call this function with only valid games.")
@@ -172,14 +172,14 @@ class Mulligan(object):
                 print("Result for", result['opponent_deck'], result['opponent'])
                 print("Number of games:", result['number of games'])
                 print("Number of wins:", result['number of wins'])
-                print("Win %: {0:.2f}".format((result['number of wins']/result['number of games'])*100))
+                print("Win %: {0:.2f}".format((result['number of wins'] / result['number of games']) * 100))
                 for cards in result['cards_evaluated']:
                     if cards['times played'] > 0:
                         print("Number of games with card:", cards['number of games with card'])
                         print(cards['card'], "was played", cards['times played'])
                         print("Number of wins with:", cards['card'], cards['number of wins with card'])
-                        print("Win %: {0:.2f}".format((cards['number of wins with card']/cards['number of games with '
-                                                                                               'card'])*100))
+                        print("Win %: {0:.2f}".format((cards['number of wins with card'] / cards['number of games with '
+                                                                                                 'card']) * 100))
             else:
                 print("No games against", result['opponent_deck'], result['opponent'])
 
@@ -214,16 +214,17 @@ class Mulligan(object):
                 worksheet.write(row, col + 1, readable_deck)
                 worksheet.write(row, col + 2, result['number of wins'])
                 worksheet.write(row, col + 3, result['number of games'] - result['number of wins'])
-                worksheet.write(row, col + 4, result['number of wins']/result['number of games']*100)
+                worksheet.write(row, col + 4, result['number of wins'] / result['number of games'] * 100)
                 for cards in result['cards_evaluated']:
                     row += 1
                     worksheet.write(row, col + 5, cards['card'])
                     worksheet.write(row, col + 6, cards['times played'])
                     worksheet.write(row, col + 7, cards['number of wins with card'])
-                    worksheet.write(row, col + 8, cards['number of games with card'] -cards['number of wins with card'])
+                    worksheet.write(row, col + 8,
+                                    cards['number of games with card'] - cards['number of wins with card'])
                     if cards['number of games with card'] > 0:
-                        worksheet.write(row, col + 9, cards['number of wins with card']/cards['number of games with '
-                                                                                          'card']*100)
+                        worksheet.write(row, col + 9, cards['number of wins with card'] / cards['number of games with '
+                                                                                                'card'] * 100)
                     else:
                         worksheet.write(row, col + 9, "N/A")
         workbook.close()
