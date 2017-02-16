@@ -1,4 +1,5 @@
 import datetime
+import pprint
 
 import trackopy
 import json
@@ -7,25 +8,29 @@ import xlsxwriter
 
 
 class Mulligan(object):
-    """A class to compute the performance of cards in certain match ups with
-    following properties:
+    """A class to compute the performance of cards in certain match ups. The goal is to improve your mulligan and/or to
+        identify cards that are weak against certain match ups in order to find room for tech cards. The Mulligan class
+        has the following properties:
 
     Attributes:
         data_source: System path to your track-o-bot history in .json format. E.g. 'C:\\Users\\tommy\\history.json'
+            Alternatively, you can insert your track-o-bot account data as dictionary. E.g.
+            {"username": "YourAccount", "password": "YourPassword"}
 
         deck_type: Deck type in tuple format from track-o-bot. E.g. ("Miracle", "Rogue")
 
-        opponent_deck_type_tuples_list: List of opponents you are interested in. E.g. [("Aggro", "Shaman"), ("Midrange", "Shaman"), ("Reno", "Warlock")]
+        opponent_deck_type_tuples_list: List of opponents you are interested in. E.g.:
+        [("Aggro", "Shaman"), ("Midrange", "Shaman"), ("Reno", "Warlock")]
         
         deck_list: List (or single card) you want to evaluate. E.g.
             deck_list = ["Counterfeit Coin", "Backstab", "Preparation", "Small-Time Buccaneer"]
 
-        max_turn: Until which turn you want to check your games? Games are often decided until turn 5 or 6 so if you set this 5 all cards
-            that are played after turn 5 will be ignored. If you set this to 20 or higher, all turns will be included.
+        max_turn: Until which turn you want to check your games? Games are often decided until turn 5 or 6 so if you set
+            this 5 all cards that are played after turn 5 will be ignored. If you set this to 20 or higher, all turns
+            will be included.
     """
 
     def __init__(self, data_source, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn):
-        """Initialize the calculator"""
         # Check if the user supplied data in .json format.
         pages = [] # contains the data page(s)
         if '.json' in data_source:
@@ -52,7 +57,8 @@ class Mulligan(object):
         self.opponent_deck_type_tuples_list = opponent_deck_type_tuples_list
         if not self.opponent_deck_type_tuples_list:
             print("No match-ups given. Data from track-o-bot will be loaded.")
-            self.opponent_deck_type_tuples_list = self.load_decklists_from_json("testdata\\track-o-bot_decklists_16022017.json")
+            self.opponent_deck_type_tuples_list = self.load_decklists_from_json("testdata\\track-o"
+                                                                                "-bot_decklists_16022017.json")
             # Todo: we could create a user here or ask for pw/user, but the list does not contain 'Other' decks
             # user = trackopy.Trackobot.create_user()
             # trackobot = trackopy.Trackobot(user['username'], user['password'])
@@ -83,9 +89,9 @@ class Mulligan(object):
         page = trackobot.history(i)['history']
 
         while self.serach_pages_younger_than(page, minus_ten_days):
+            pages.append(page.copy())
             i += 1
             page = trackobot.history(i)['history']
-            pages.append(page)
         return pages
 
     def serach_pages_younger_than(self, pages, date):
@@ -169,50 +175,57 @@ class Mulligan(object):
                 print("Win %: {0:.2f}".format((result['number of wins']/result['number of games'])*100))
                 for cards in result['cards_evaluated']:
                     if cards['times played'] > 0:
-                        print("Number of wins with:", cards['card'], cards['number of wins with card'])
-                        print(cards['card'], "was played", cards['times played'])
                         print("Number of games with card:", cards['number of games with card'])
+                        print(cards['card'], "was played", cards['times played'])
+                        print("Number of wins with:", cards['card'], cards['number of wins with card'])
                         print("Win %: {0:.2f}".format((cards['number of wins with card']/cards['number of games with '
                                                                                                'card'])*100))
             else:
                 print("No games against", result['opponent_deck'], result['opponent'])
 
-    def print_result_to_xlsx(self, result_list):
+    def print_result_to_xlsx(self, result_list, filename="mullipy_results.xlsx"):
         # Create a workbook and add a worksheet.
-        workbook = xlsxwriter.Workbook('mullipy_results.xlsx')
-        worksheet = workbook.add_worksheet()
+        workbook = xlsxwriter.Workbook(filename)
+        worksheet = workbook.add_worksheet(self.deck_type[1] + " " + self.deck_type[0])
 
         # Start from the first cell. Rows and columns are zero indexed.
         row = 0
         col = 0
         # headlines
-        worksheet.write(0, 0, "Match up")
-        worksheet.write(0, 1, "Number of games")
+        worksheet.write(0, 0, "Opponent Hero")
+        worksheet.write(0, 1, "Opponent Deck")
         worksheet.write(0, 2, "Number of wins")
-        worksheet.write(0, 3, "Win %")
-        worksheet.write(0, 4, "Card")
-        worksheet.write(0, 5, "Number of games with card")
+        worksheet.write(0, 3, "Number of losses")
+        worksheet.write(0, 4, "Win %")
+        worksheet.write(0, 5, "Card")
         worksheet.write(0, 6, "Times played")
         worksheet.write(0, 7, "Number of wins with card")
-        worksheet.write(0, 8, "Win % with card played")
+        worksheet.write(0, 8, "Number of losses with card")
+        worksheet.write(0, 9, "Win % with card played")
 
         for result in result_list:
             if result['number of games'] > 0:
                 row += 1
-                deck_type = result['opponent_deck'] + result['opponent']
-                worksheet.write(row, col, deck_type)
-                worksheet.write(row, col + 1, result['number of games'])
+                if not result['opponent_deck']:
+                    readable_deck = "Other"
+                else:
+                    readable_deck = result['opponent_deck']
+                worksheet.write(row, col, result['opponent'])
+                worksheet.write(row, col + 1, readable_deck)
                 worksheet.write(row, col + 2, result['number of wins'])
-                worksheet.write(row, col + 3, result['number of wins']/result['number of games']*100)
+                worksheet.write(row, col + 3, result['number of games'] - result['number of wins'])
+                worksheet.write(row, col + 4, result['number of wins']/result['number of games']*100)
                 for cards in result['cards_evaluated']:
                     row += 1
-                    if cards['times played'] > 0:
-                        worksheet.write(row, col + 4, cards['card'])
-                        worksheet.write(row, col + 5, cards['number of games with card'])
-                        worksheet.write(row, col + 6, cards['times played'])
-                        worksheet.write(row, col + 7, cards['number of wins with card'])
-                        worksheet.write(row, col + 8, cards['number of wins with card']/cards['number of games with '
-                                                                                              'card']*100)
+                    worksheet.write(row, col + 5, cards['card'])
+                    worksheet.write(row, col + 6, cards['times played'])
+                    worksheet.write(row, col + 7, cards['number of wins with card'])
+                    worksheet.write(row, col + 8, cards['number of games with card'] -cards['number of wins with card'])
+                    if cards['number of games with card'] > 0:
+                        worksheet.write(row, col + 9, cards['number of wins with card']/cards['number of games with '
+                                                                                          'card']*100)
+                    else:
+                        worksheet.write(row, col + 9, "N/A")
         workbook.close()
 
     def load_decklists_from_json(self, path):

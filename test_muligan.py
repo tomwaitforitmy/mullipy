@@ -79,6 +79,27 @@ class MyTest(unittest.TestCase):
         self.assert_card_result(result_list, "Rogue", "Miracle", "Counterfeit Coin", 0, 0) # not played
         self.assert_card_result(result_list, "Warlock", "Reno", "Counterfeit Coin", 0, 0) # not played
 
+    def test_evaluate_with_2_pages_(self):
+        path_to_data = "testdata\\2pages16022017.json"
+        deck_type = ("Miracle", "Rogue")
+        deck_list = ["Backstab", "Counterfeit Coin"]
+        opponent_deck_type_tuples_list = []
+        max_turn = 20
+        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
+        result_list = calculator.evaluate2()
+
+        # Score vs e.g. Aggro Shaman 3 wins 6 loses
+        self.assert_matchup_result(result_list, "Shaman", "Aggro", 9, 3)
+        # Backstab was played 6 times and has 2 wins vs Aggro Shaman
+        self.assert_card_result(result_list, "Shaman", "Aggro", "Backstab", 6, 2)
+        # Counterfeit Coin was played 10 times and has 2 wins vs Aggro Shaman
+        self.assert_card_result(result_list, "Shaman", "Aggro", "Counterfeit Coin", 10, 3)
+        # Score vs Jade Shaman 3 games 3 wins
+        self.assert_matchup_result(result_list, "Shaman", "Jade", 3, 3)
+        # Score vs Pirate Warrior 3 games 1 win
+        self.assert_matchup_result(result_list, "Warrior", "Pirate", 4, 1)
+
+
     def test_evalualte_with_empty_opponent_list(self):
         path_to_data = "testdata\\page08022017.json"
         deck_type = ("Miracle", "Rogue")
