@@ -17,7 +17,7 @@ class MyTest(unittest.TestCase):
                 assert(results['number of wins'] == real_wins)
 
     def test_evalualte(self):
-        path_to_data = "C:\\Users\\tommy\\history.json"
+        path_to_data = "testdata\\history.json"
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman")]
@@ -36,7 +36,7 @@ class MyTest(unittest.TestCase):
         assert(result_list[0]['cards_evaluated'][0]['times played'] == 3)
 
     def test_evalualte_with_complex_input(self):
-        path_to_data = "C:\\Users\\tommy\\history.json"
+        path_to_data = "testdata\\history.json"
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Midrange", "Shaman"), ("Reno", "Warlock")]
@@ -54,7 +54,7 @@ class MyTest(unittest.TestCase):
         self.assert_matchup_result(result_list, "Shaman", "Aggro", 3, 2)
 
     def test_evalualte_with_complex_page_input(self):
-        path_to_data = "C:\\Users\\tommy\\page08022017.json"
+        path_to_data = "testdata\\page08022017.json"
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate", "Counterfeit Coin"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Reno", "Warlock"), ("Pirate", "Warrior"), ("Miracle", "Rogue")]
@@ -80,7 +80,7 @@ class MyTest(unittest.TestCase):
         self.assert_card_result(result_list, "Warlock", "Reno", "Counterfeit Coin", 0, 0) # not played
 
     def test_evalualte_with_empty_opponent_list(self):
-        path_to_data = "C:\\Users\\tommy\\page08022017.json"
+        path_to_data = "testdata\\page08022017.json"
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate", "Counterfeit Coin"]
         opponent_deck_type_tuples_list = []
@@ -89,12 +89,12 @@ class MyTest(unittest.TestCase):
         result_list = calculator.evaluate2()
 
         # Score vs e.g. Aggro Shaman 2 wins 2 loses
-        self.assert_matchup_result(result_list, "All", "All", 6, 2)
+        self.assert_matchup_result(result_list, "Shaman", "Aggro", 4, 2)
 
         # Eviscerate for instance was played 3 times and has 0 wins vs Aggro Shaman
-        self.assert_card_result(result_list, "All", "All", "Eviscerate", 5, 0)
+        self.assert_card_result(result_list, "Shaman", "Aggro", "Eviscerate", 3, 0)
 
-        self.assert_card_result(result_list, "Shaman", "Aggro", "Counterfeit Coin", 4, 1)
+        self.assert_card_result(result_list, "Shaman", "Aggro", "Counterfeit Coin", 3, 1)
 
 if __name__ == '__main__':
     unittest.main()

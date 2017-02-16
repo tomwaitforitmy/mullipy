@@ -1,6 +1,9 @@
 import datetime
+
 import trackopy
 import json
+
+import xlsxwriter
 
 
 class Mulligan(object):
@@ -47,6 +50,14 @@ class Mulligan(object):
         self.data = pages
         self.deck_type = deck_type
         self.opponent_deck_type_tuples_list = opponent_deck_type_tuples_list
+        if not self.opponent_deck_type_tuples_list:
+            print("No match-ups given. Data from track-o-bot will be loaded.")
+            self.opponent_deck_type_tuples_list = self.load_decklists_from_json("testdata\\track-o-bot_decklists_16022017.json")
+            # Todo: we could create a user here or ask for pw/user, but the list does not contain 'Other' decks
+            # user = trackopy.Trackobot.create_user()
+            # trackobot = trackopy.Trackobot(user['username'], user['password'])
+            # decks = trackobot.decks()
+
         if not deck_list:
             raise Warning("From mulligan.__init__: misuse of variable.\
                           Please insert at least one card to evaluate. E.g. ['Coin']")
@@ -150,7 +161,7 @@ class Mulligan(object):
 
     def print_result(self, result_list):
         for result in result_list:
-            print("######")
+            print("----------------------------------------")
             if result['number of games'] > 0:
                 print("Result for", result['opponent_deck'], result['opponent'])
                 print("Number of games:", result['number of games'])
@@ -165,6 +176,54 @@ class Mulligan(object):
                                                                                                'card'])*100))
             else:
                 print("No games against", result['opponent_deck'], result['opponent'])
+
+    def print_result_to_xlsx(self, result_list):
+        # Create a workbook and add a worksheet.
+        workbook = xlsxwriter.Workbook('mullipy_results.xlsx')
+        worksheet = workbook.add_worksheet()
+
+        # Start from the first cell. Rows and columns are zero indexed.
+        row = 0
+        col = 0
+        # headlines
+        worksheet.write(0, 0, "Match up")
+        worksheet.write(0, 1, "Number of games")
+        worksheet.write(0, 2, "Number of wins")
+        worksheet.write(0, 3, "Win %")
+        worksheet.write(0, 4, "Card")
+        worksheet.write(0, 5, "Number of games with card")
+        worksheet.write(0, 6, "Times played")
+        worksheet.write(0, 7, "Number of wins with card")
+        worksheet.write(0, 8, "Win % with card played")
+
+        for result in result_list:
+            if result['number of games'] > 0:
+                row += 1
+                deck_type = result['opponent_deck'] + result['opponent']
+                worksheet.write(row, col, deck_type)
+                worksheet.write(row, col + 1, result['number of games'])
+                worksheet.write(row, col + 2, result['number of wins'])
+                worksheet.write(row, col + 3, result['number of wins']/result['number of games']*100)
+                for cards in result['cards_evaluated']:
+                    row += 1
+                    if cards['times played'] > 0:
+                        worksheet.write(row, col + 4, cards['card'])
+                        worksheet.write(row, col + 5, cards['number of games with card'])
+                        worksheet.write(row, col + 6, cards['times played'])
+                        worksheet.write(row, col + 7, cards['number of wins with card'])
+                        worksheet.write(row, col + 8, cards['number of wins with card']/cards['number of games with '
+                                                                                              'card']*100)
+        workbook.close()
+
+    def load_decklists_from_json(self, path):
+        with open(path) as file:
+            data = json.load(file)
+
+        opponent_deck_type_tuples_list = []
+        for deck in data['decks']:
+            if deck['active']:
+                opponent_deck_type_tuples_list.append((deck['name'], deck['hero']))
+        return opponent_deck_type_tuples_list
 
     def evaluate2(self):
 
@@ -186,31 +245,20 @@ class Mulligan(object):
 
         # opponent deck(s)
         opponent_deck_type_tuples_list = self.opponent_deck_type_tuples_list
-        if not opponent_deck_type_tuples_list:
-            print("No match-ups selected. All games will be summarzied.")
-            opponent = "All"
-            opponent_deck = "All"
-            # evaluate games with per card
-            result = {'opponent': opponent, 'opponent_deck': opponent_deck, 'number of games': len(valid_games),
-                      'number of wins': self.count_wins(valid_games),
-                      'cards_evaluated': self.evaluate_deck_list(deck_list, valid_games,
+
+        for deck_types in opponent_deck_type_tuples_list:
+            opponent = deck_types[1]
+            opponent_deck = deck_types[0]
+
+            # get all games vs one archetype
+            games_vs_opponent = self.find_opponent_deck(valid_games, opponent, opponent_deck)
+
+            result = {'opponent': opponent, 'opponent_deck': opponent_deck,
+                      'number of games': len(games_vs_opponent),
+                      'number of wins': self.count_wins(games_vs_opponent),
+                      'cards_evaluated': self.evaluate_deck_list(deck_list, games_vs_opponent,
                                                                  max_turn)}
 
             result_list.append(result.copy())
-        else:
-            for deck_types in opponent_deck_type_tuples_list:
-                opponent = deck_types[1]
-                opponent_deck = deck_types[0]
-
-                # get all games vs one archetype
-                games_vs_opponent = self.find_opponent_deck(valid_games, opponent, opponent_deck)
-
-                result = {'opponent': opponent, 'opponent_deck': opponent_deck,
-                          'number of games': len(games_vs_opponent),
-                          'number of wins': self.count_wins(games_vs_opponent),
-                          'cards_evaluated': self.evaluate_deck_list(deck_list, games_vs_opponent,
-                                                                     max_turn)}
-
-                result_list.append(result.copy())
 
         return result_list
