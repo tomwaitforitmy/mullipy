@@ -1,6 +1,5 @@
 import json
-
-import muligan
+import mulligan
 from pprint import pprint
 
 #path_to_data = "C:\\Users\\tommy\\page08022017.json"
@@ -14,7 +13,7 @@ deck_list = ["Counterfeit Coin","Backstab","Preparation", "Small-Time Buccaneer"
 #deck_list = ["Counterfeit Coin","Eviscerate"]
 opponent_deck_type_tuples_list = []#[("Aggro", "Shaman")]
 max_turn = 20
-calculator = muligan.Muligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
+calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
 result_list = calculator.evaluate2()
 
 #pprint(result_list)
