@@ -4,7 +4,7 @@ import mulligan
 class MyTest(unittest.TestCase):
     def assert_card_result(self, result_list, opponent, opponent_deck, card, real_times_played, real_wins):
         for results in result_list:
-            if(results['opponent'] == opponent) & (results['opponent_deck'] == opponent_deck):
+            if(results['opponent'] == opponent) and (results['opponent_deck'] == opponent_deck):
                 for cards in results['cards_evaluated']:
                     if cards['card'] == card:
                         assert(cards['times played'] == real_times_played)
@@ -12,7 +12,7 @@ class MyTest(unittest.TestCase):
 
     def assert_matchup_result(self, result_list, opponent, opponent_deck, real_number_of_games, real_wins):
         for results in result_list:
-            if(results['opponent'] == opponent) & (results['opponent_deck'] == opponent_deck):
+            if(results['opponent'] == opponent) and (results['opponent_deck'] == opponent_deck):
                 assert(results['number of games'] == real_number_of_games)
                 assert(results['number of wins'] == real_wins)
 
@@ -21,9 +21,8 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman")]
-        max_turn = 10
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
-        result_list = calculator.evaluate2()
+        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate()
 
         # In this test data set:
         # 3 games in total vs Aggro Shaman
@@ -40,9 +39,8 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Midrange", "Shaman"), ("Reno", "Warlock")]
-        max_turn = 10
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
-        result_list = calculator.evaluate2()
+        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate()
 
         # I get lucky here because Aggro Shaman is the first result
         # In this test data set:
@@ -58,9 +56,8 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate", "Counterfeit Coin"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Reno", "Warlock"), ("Pirate", "Warrior"), ("Miracle", "Rogue")]
-        max_turn = 20
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
-        result_list = calculator.evaluate2()
+        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate()
 
         # Score vs e.g. Aggro Shaman 2 wins 2 loses
         self.assert_matchup_result(result_list, "Shaman", "Aggro", 4, 2)
@@ -84,9 +81,8 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Backstab", "Counterfeit Coin"]
         opponent_deck_type_tuples_list = []
-        max_turn = 20
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
-        result_list = calculator.evaluate2()
+        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate()
 
         # Score vs e.g. Aggro Shaman 3 wins 6 loses
         self.assert_matchup_result(result_list, "Shaman", "Aggro", 9, 3)
@@ -105,9 +101,8 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate", "Counterfeit Coin"]
         opponent_deck_type_tuples_list = []
-        max_turn = 20
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list, max_turn)
-        result_list = calculator.evaluate2()
+        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate()
 
         # Score vs e.g. Aggro Shaman 2 wins 2 loses
         self.assert_matchup_result(result_list, "Shaman", "Aggro", 4, 2)
