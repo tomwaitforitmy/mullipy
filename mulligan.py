@@ -1,9 +1,6 @@
 import datetime
-import pprint
-
 import trackopy
 import json
-
 import xlsxwriter
 
 
@@ -13,10 +10,6 @@ class Mulligan(object):
         has the following properties:
 
     Attributes:
-        data_source: System path to your track-o-bot history in .json format. E.g. 'C:\\Users\\tommy\\history.json'
-            Alternatively, you can insert your track-o-bot account data as dictionary. E.g.
-            {"username": "YourAccount", "password": "YourPassword"}
-
         deck_type: Deck type in tuple format from track-o-bot. E.g. ("Miracle", "Rogue")
 
         opponent_deck_type_tuples_list: List of opponents you are interested in. E.g.:
@@ -26,29 +19,8 @@ class Mulligan(object):
             deck_list = ["Counterfeit Coin", "Backstab", "Preparation", "Small-Time Buccaneer"]
     """
 
-    def __init__(self, data_source, deck_type: tuple, opponent_deck_type_tuples_list: list, deck_list: list):
-        # Check if the user supplied data in .json format.
-        pages = []  # contains the data page(s)
-        if '.json' in data_source:
-            with open(data_source) as file:
-                page = json.load(file)
-            # Standard history page contains stuff we don't need. Here we get rid of it. Todo: adapt for multiple pages.
-            if 'history' in page:
-                pages.append(page['history'])
-            else:
-                pages.append(page)
-        # Check if we can connect to track-o-bot with the data
-        elif {'username', 'password'}.issubset(data_source):
-            print("Found username and password. Connecting to track-o-bot.com ...")
-            pages = self.get_pages_from_trackobot(data_source['username'], data_source['password'])
-
-        else:
-            raise Warning("From mulligan.__init__: misuse of data_source.\
-                          Please supply a path to a .json file (e.g. 'C:\history.json')\
-                          or username and password for track-o-bot\
-                          (e.g. {'username': 'your_name', 'password': 'your_passowrd'}")
-
-        self.data = pages
+    def __init__(self, deck_type: tuple, opponent_deck_type_tuples_list: list, deck_list: list):
+        self.data = []
         self.deck_type = deck_type
         self.opponent_deck_type_tuples_list = opponent_deck_type_tuples_list
         if not self.opponent_deck_type_tuples_list:
@@ -308,13 +280,48 @@ class Mulligan(object):
                 opponent_deck_type_tuples_list.append((deck['name'], deck['hero']))
         return opponent_deck_type_tuples_list
 
-    def evaluate(self):
+    def evaluate_json(self, path: str) -> list:
+        """
+        Calculate all the win rates, usage etc. for a given track-o-bot history in .json format.
+        :param path: Filename of the .json file. E.g. 'C:\\Users\\tommy\\history.json'
+            Alternatively, you can insert your track-o-bot account data as dictionary in the .json file. E.g.
+            {"username": "YourAccount", "password": "YourPassword"}
+        """
+        self.data = []  # contains the data page(s)
+        with open(path) as file:
+            page = json.load(file)
 
+        if 'username' and 'password' in page:
+            return self.evaluate_online(page['username'], page['password'])
+            # Standard history page contains stuff we don't need. Here we get rid of it. Todo: adapt for multiple pages.
+        if 'history' in page:
+            self.data.append(page['history'])
+        else:
+            self.data.append(page)
+
+        return self.__evaluate()
+
+    def evaluate_online(self, username: str, password: str) -> list:
+        """
+        Calculate all the win rates, usage etc. for your online track-o-bot history.
+        :param username: Your track-o-bot username as string. E.g. wandering-dust-devil-1234
+        :param password: Your track-o-bot password as string. E.g. 123abc123a
+        """
+        print("Connecting to track-o-bot.com with your user data...")
+        self.data = self.get_pages_from_trackobot(username, password)
+        if not self.data:
+            raise ValueError("Could not retrieve any data from track-o-bot.com. Please check your user data and/or "
+                             "internet connection.")
+        return self.__evaluate()
+
+    def __evaluate(self):
         """
         Evaluates the complete input of the Mulligan class.
         :return: Afterwards, choose your favorite way to print results. E.g. print_result_to_xlsx() or print_result().
         """
         pages = self.data
+        if not pages:
+            raise ValueError("No data present for evaluation! Check your input!")
         deck_list = self.deck_list
 
         # our deck

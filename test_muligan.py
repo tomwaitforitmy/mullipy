@@ -21,8 +21,8 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman")]
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
-        result_list = calculator.evaluate()
+        calculator = mulligan.Mulligan(deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate_json(path_to_data)
 
         # In this test data set:
         # 3 games in total vs Aggro Shaman
@@ -39,10 +39,9 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Midrange", "Shaman"), ("Reno", "Warlock")]
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
-        result_list = calculator.evaluate()
+        calculator = mulligan.Mulligan(deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate_json(path_to_data)
 
-        # I get lucky here because Aggro Shaman is the first result
         # In this test data set:
         # 3 games in total vs Aggro Shaman
         # 2 games where won in total
@@ -56,8 +55,8 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate", "Counterfeit Coin"]
         opponent_deck_type_tuples_list = [("Aggro", "Shaman"), ("Reno", "Warlock"), ("Pirate", "Warrior"), ("Miracle", "Rogue")]
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
-        result_list = calculator.evaluate()
+        calculator = mulligan.Mulligan(deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate_json(path_to_data)
 
         # Score vs e.g. Aggro Shaman 2 wins 2 loses
         self.assert_matchup_result(result_list, "Shaman", "Aggro", 4, 2)
@@ -81,8 +80,8 @@ class MyTest(unittest.TestCase):
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Backstab", "Counterfeit Coin"]
         opponent_deck_type_tuples_list = []
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
-        result_list = calculator.evaluate()
+        calculator = mulligan.Mulligan(deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate_json(path_to_data)
 
         # Score vs e.g. Aggro Shaman 3 wins 6 loses
         self.assert_matchup_result(result_list, "Shaman", "Aggro", 9, 3)
@@ -95,14 +94,13 @@ class MyTest(unittest.TestCase):
         # Score vs Pirate Warrior 3 games 1 win
         self.assert_matchup_result(result_list, "Warrior", "Pirate", 4, 1)
 
-
     def test_evalualte_with_empty_opponent_list(self):
         path_to_data = "testdata\\page08022017.json"
         deck_type = ("Miracle", "Rogue")
         deck_list = ["Eviscerate", "Counterfeit Coin"]
         opponent_deck_type_tuples_list = []
-        calculator = mulligan.Mulligan(path_to_data, deck_type, opponent_deck_type_tuples_list, deck_list)
-        result_list = calculator.evaluate()
+        calculator = mulligan.Mulligan(deck_type, opponent_deck_type_tuples_list, deck_list)
+        result_list = calculator.evaluate_json(path_to_data)
 
         # Score vs e.g. Aggro Shaman 2 wins 2 loses
         self.assert_matchup_result(result_list, "Shaman", "Aggro", 4, 2)
