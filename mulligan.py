@@ -1,4 +1,7 @@
 import datetime
+from pprint import pprint
+from sys import stderr
+
 import trackopy
 import json
 import xlsxwriter
@@ -38,6 +41,7 @@ class Mulligan(object):
         self.deck_list = deck_list
         # We use a big value here that can never be reached due to fatigue in Hearthstone
         self.max_turn = 9999
+        self.save_file_name = None
 
     def set_max_turn(self, max_turn: int):
         """
@@ -51,6 +55,14 @@ class Mulligan(object):
             self.max_turn = max_turn
         else:
             raise TypeError("From mulligan.setMaxTurn(): The maximum turn must be a positive integer!")
+
+    def set_save_file_path(self, path: str):
+        """
+        If you want to save the data (e.g. obtained from track-o-bot) for later use a .json file, set this path
+        to a valid value (e.g. "C:\myHistory.json").
+        :param path: Path to save the data as json file.
+        """
+        self.save_file_name = path
 
     def get_pages_from_trackobot(self, username: str, password: str, date: object = datetime.datetime.now()) -> list:
         """
@@ -76,7 +88,7 @@ class Mulligan(object):
             page = trackobot.history(i)['history']
         return pages
 
-    def search_pages_younger_than(self, pages: list, date: object):
+    def search_pages_younger_than(self, pages: list, date: object) -> list:
         """
         Looks for history pages that are younger than a certain date.
         :param pages: A list of history pages from track-o-bot.
@@ -90,6 +102,15 @@ class Mulligan(object):
         if not pages_younger_than:
             print("Page older than 10 days. No card data available.", page['added'])
         return pages_younger_than
+
+    def save_data_as_json(self, data: dict, path: str):
+        """
+        Helper method to save data as json.
+        :param data: The data you want to save.
+        :param path: Path where to save the data.
+        """
+        with open(path, 'w') as fp:
+            json.dump(data, fp)
 
     def find_card(self, card: object, game: object) -> object:
         """
@@ -223,21 +244,22 @@ class Mulligan(object):
         """
         workbook = xlsxwriter.Workbook(filename)
         worksheet = workbook.add_worksheet(self.deck_type[1] + " " + self.deck_type[0])
+        bold = workbook.add_format({'bold': True})
 
         # Start from the first cell. Rows and columns are zero indexed.
         row = 0
         col = 0
         # headlines
-        worksheet.write(0, 0, "Opponent Hero")
-        worksheet.write(0, 1, "Opponent Deck")
-        worksheet.write(0, 2, "Wins")
-        worksheet.write(0, 3, "Losses")
-        worksheet.write(0, 4, "Win %")
-        worksheet.write(0, 5, "Card")
-        worksheet.write(0, 6, "Times played")
-        worksheet.write(0, 7, "Wins with card")
-        worksheet.write(0, 8, "Losses with card")
-        worksheet.write(0, 9, "Win % with card played")
+        worksheet.write(0, 0, "Opponent Hero", bold)
+        worksheet.write(0, 1, "Opponent Deck", bold)
+        worksheet.write(0, 2, "Wins", bold)
+        worksheet.write(0, 3, "Losses", bold)
+        worksheet.write(0, 4, "Win %", bold)
+        worksheet.write(0, 5, "Card", bold)
+        worksheet.write(0, 6, "Times played", bold)
+        worksheet.write(0, 7, "Wins with card", bold)
+        worksheet.write(0, 8, "Losses with card", bold)
+        worksheet.write(0, 9, "Win % with card played", bold)
 
         for result in result_list:
             if result['number of games'] > 0:
@@ -289,15 +311,17 @@ class Mulligan(object):
         """
         self.data = []  # contains the data page(s)
         with open(path) as file:
-            page = json.load(file)
+            pages = json.load(file)
 
-        if 'username' and 'password' in page:
-            return self.evaluate_online(page['username'], page['password'])
+        if 'username' and 'password' in pages:
+            return self.evaluate_online(pages['username'], pages['password'])
             # Standard history page contains stuff we don't need. Here we get rid of it. Todo: adapt for multiple pages.
-        if 'history' in page:
-            self.data.append(page['history'])
-        else:
-            self.data.append(page)
+
+        for page in pages:
+            if 'history' in page:
+                self.data.append(page['history'])
+            else:
+                self.data.append(page)
 
         return self.__evaluate()
 
@@ -320,6 +344,10 @@ class Mulligan(object):
         :return: Afterwards, choose your favorite way to print results. E.g. print_result_to_xlsx() or print_result().
         """
         pages = self.data
+
+        if self.save_file_name:
+            self.save_data_as_json(pages, self.save_file_name)
+
         if not pages:
             raise ValueError("No data present for evaluation! Check your input!")
         deck_list = self.deck_list

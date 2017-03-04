@@ -1,7 +1,7 @@
 import unittest
 import mulligan
 
-class MyTest(unittest.TestCase):
+class MulliganTest(unittest.TestCase):
     def assert_card_result(self, result_list, opponent, opponent_deck, card, real_times_played, real_wins):
         for results in result_list:
             if(results['opponent'] == opponent) and (results['opponent_deck'] == opponent_deck):
