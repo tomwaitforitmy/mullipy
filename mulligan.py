@@ -42,6 +42,17 @@ class Mulligan(object):
         # We use a big value here that can never be reached due to fatigue in Hearthstone
         self.max_turn = 9999
         self.save_file_name = None
+        self.game_mode = None
+
+    def set_game_mode(self, mode: str):
+        """
+        If this parameter is set, only games from the respective type will be considered.
+        :param game_type: Set this string to 'ranked', 'arena', 'casual' or 'friendly'.
+        """
+        if mode == 'ranked' or mode == 'arena' or mode == 'casual' or mode == 'friendly':
+            self.game_mode = mode
+        else:
+            raise ValueError("Please set the game to ranked, arena, casual or friendly.")
 
     def set_max_turn(self, max_turn: int):
         """
@@ -137,7 +148,10 @@ class Mulligan(object):
         for page in pages:
             for game in page:
                 if (game["hero"] == hero) and (game["hero_deck"] == hero_deck):
-                    result_games.append(game)
+                    if not self.game_mode:
+                        result_games.append(game)
+                    elif game["mode"] == self.game_mode:
+                        result_games.append(game)
         return result_games
 
     def find_opponent_deck(self, page: list, opponent: str, opponent_deck: str) -> list:

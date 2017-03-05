@@ -110,5 +110,18 @@ class MulliganTest(unittest.TestCase):
 
         self.assert_card_result(result_list, "Shaman", "Aggro", "Counterfeit Coin", 3, 1)
 
+    def test_evaluate_with_game_type_casual(self):
+        path_to_data = "testdata\\casual.json"
+        deck_type = ("Miracle", "Rogue")
+        deck_list = ["Edwin VanCleef"]
+        opponent_deck_type_tuples_list = []
+        calculator = mulligan.Mulligan(deck_type, opponent_deck_type_tuples_list, deck_list)
+        calculator.set_game_mode('casual')
+        result_list = calculator.evaluate_json(path_to_data)
+
+        self.assert_matchup_result(result_list, "Priest", "Other", 1, 1)
+        self.assert_matchup_result(result_list, "Paladin", "Murloc", 1, 0)
+        self.assert_matchup_result(result_list, "Hunter", "Midrange", 1, 1)
+
 if __name__ == '__main__':
     unittest.main()
