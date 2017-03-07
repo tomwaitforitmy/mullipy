@@ -43,6 +43,8 @@ class Mulligan(object):
         self.max_turn = 9999
         self.save_file_name = None
         self.game_mode = None
+        self.start = None
+        self.end = None
 
     def set_game_mode(self, mode: str):
         """
@@ -53,6 +55,20 @@ class Mulligan(object):
             self.game_mode = mode
         else:
             raise ValueError("Please set the game to ranked, arena, casual or friendly.")
+
+    def set_start_date(self, date: str):
+        """
+        Setter for a time constraint.
+        :param date: in form of day-month-year hour:minute:second. E.g. "01-01-2017 23:14:22"
+        """
+        self.start = datetime.datetime.strptime(date, '%d-%m-%Y %H:%M:%S')
+
+    def set_end_date(self, date: str):
+        """
+        Setter for a time constraint.
+        :param date: in form of day-month-year hour:minute:second. E.g. "01-01-2017 23:14:22"
+        """
+        self.end = datetime.datetime.strptime(date, '%d-%m-%Y %H:%M:%S')
 
     def set_max_turn(self, max_turn: int):
         """
@@ -352,6 +368,31 @@ class Mulligan(object):
                              "internet connection.")
         return self.__evaluate()
 
+    def get_matches_after(self, date: datetime, games: object):
+        """
+        Sort out games after this date.
+        :param date: After.
+        :param games: List of games.
+        :return: Games played before this date.
+        """
+        result_games = []
+        for game in games:
+            if game['added'] > date.isoformat():
+                result_games.append(game)
+        return result_games
+
+    def get_matches_before(self, date: datetime, games: object):
+        """ Sort out games before this date.
+        :param date: Before
+        :param games: List of games.
+        :return: Games played before this date.
+        """
+        result_games = []
+        for game in games:
+            if game['added'] < date.isoformat():
+                result_games.append(game)
+        return result_games
+
     def __evaluate(self):
         """
         Evaluates the complete input of the Mulligan class.
@@ -377,6 +418,12 @@ class Mulligan(object):
         # 'times played': 1}] }]
 
         valid_games = self.find_hero_deck(pages, hero, hero_deck)
+        if self.start:
+            valid_games = self.get_matches_after(self.start, valid_games)
+        if self.end:
+            valid_games = self.get_matches_before(self.end, valid_games)
+        if not valid_games:
+            raise ValueError("No valid games found for your dates. Check your input!")
 
         # opponent deck(s)
         opponent_deck_type_tuples_list = self.opponent_deck_type_tuples_list

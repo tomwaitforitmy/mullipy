@@ -123,5 +123,19 @@ class MulliganTest(unittest.TestCase):
         self.assert_matchup_result(result_list, "Paladin", "Murloc", 1, 0)
         self.assert_matchup_result(result_list, "Hunter", "Midrange", 1, 1)
 
+    def test_evaluate_with_start_and_end(self):
+        path_to_data = "testdata\\casual.json"
+        deck_type = ("Miracle", "Rogue")
+        deck_list = ["Edwin VanCleef"]
+        opponent_deck_type_tuples_list = []
+        calculator = mulligan.Mulligan(deck_type, opponent_deck_type_tuples_list, deck_list)
+        calculator.set_start_date("05-03-2017 07:50:22")
+        calculator.set_end_date("05-03-2017 08:05:00")
+        result_list = calculator.evaluate_json(path_to_data)
+
+        self.assert_matchup_result(result_list, "Priest", "Other", 1, 1)
+        self.assert_matchup_result(result_list, "Paladin", "Murloc", 1, 0)
+        self.assert_matchup_result(result_list, "Hunter", "Midrange", 1, 1)
+
 if __name__ == '__main__':
     unittest.main()
