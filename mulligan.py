@@ -168,6 +168,11 @@ class Mulligan(object):
                         result_games.append(game)
                     elif game["mode"] == self.game_mode:
                         result_games.append(game)
+                elif (game["hero"] == hero) and (hero_deck == "Other") and not (game["hero_deck"]):
+                    if not self.game_mode:
+                        result_games.append(game)
+                    elif game["mode"] == self.game_mode:
+                        result_games.append(game)
         return result_games
 
     def find_opponent_deck(self, page: list, opponent: str, opponent_deck: str) -> list:
@@ -244,6 +249,15 @@ class Mulligan(object):
             result_list.append(card_result)
         return result_list
 
+    @staticmethod
+    def compute_win_percentage(number_of_wins: int, number_of_games: int):
+        """
+        :return: The percentage of games you have won
+        """
+        if number_of_games == 0:
+            return "N/A"
+        return number_of_wins / number_of_games * 100
+
     def print_result(self, result_list: list):
         """
         Convience function to print results to the console.
@@ -255,14 +269,15 @@ class Mulligan(object):
                 print("Result for", result['opponent_deck'], result['opponent'])
                 print("Number of games:", result['number of games'])
                 print("Number of wins:", result['number of wins'])
-                print("Win %: {0:.2f}".format((result['number of wins'] / result['number of games']) * 100))
+                print("Win %: {0:.2f}".format(self.compute_win_percentage(result['number of wins'],
+                                                                          result['number of games'])))
                 for cards in result['cards_evaluated']:
                     if cards['times played'] > 0:
                         print("Number of games with card:", cards['number of games with card'])
                         print(cards['card'], "was played", cards['times played'])
                         print("Number of wins with:", cards['card'], cards['number of wins with card'])
-                        print("Win %: {0:.2f}".format((cards['number of wins with card'] / cards['number of games with '
-                                                                                                 'card']) * 100))
+                        print("Win %: {0:.2f}".format(self.compute_win_percentage(cards['number of wins with card'],
+                                                                                  cards['number of games with card'])))
             else:
                 print("No games against", result['opponent_deck'], result['opponent'])
 
@@ -291,6 +306,16 @@ class Mulligan(object):
         worksheet.write(0, 8, "Losses with card", bold)
         worksheet.write(0, 9, "Win % with card played", bold)
 
+        total_wins = 0
+        total_games = 0
+        total_card_evaluation = []
+
+        for card in self.deck_list:
+            total_card_evaluation.append({'card': card,
+                                          'times played': 0,
+                                          'number of games with card': 0,
+                                          'number of wins with card': 0})
+
         for result in result_list:
             if result['number of games'] > 0:
                 row += 1
@@ -301,8 +326,11 @@ class Mulligan(object):
                 worksheet.write(row, col, result['opponent'])
                 worksheet.write(row, col + 1, readable_deck)
                 worksheet.write(row, col + 2, result['number of wins'])
+                total_wins += result['number of wins']
                 worksheet.write(row, col + 3, result['number of games'] - result['number of wins'])
-                worksheet.write(row, col + 4, result['number of wins'] / result['number of games'] * 100)
+                total_games += result['number of games']
+                worksheet.write(row, col + 4, self.compute_win_percentage(result['number of wins'],
+                                                                          result['number of games']))
                 for cards in result['cards_evaluated']:
                     row += 1
                     worksheet.write(row, col + 5, cards['card'])
@@ -310,11 +338,29 @@ class Mulligan(object):
                     worksheet.write(row, col + 7, cards['number of wins with card'])
                     worksheet.write(row, col + 8,
                                     cards['number of games with card'] - cards['number of wins with card'])
-                    if cards['number of games with card'] > 0:
-                        worksheet.write(row, col + 9, cards['number of wins with card'] / cards['number of games with '
-                                                                                                'card'] * 100)
-                    else:
-                        worksheet.write(row, col + 9, "N/A")
+                    worksheet.write(row, col + 9, self.compute_win_percentage(cards['number of wins with card'],
+                                                                              cards['number of games with card']))
+                    for card_total in total_card_evaluation:
+                        if card_total['card'] == cards['card']:
+                            card_total['times played'] += cards['times played']
+                            card_total['number of wins with card'] += cards['number of wins with card']
+                            card_total['number of games with card'] += cards['number of games with card']
+
+        row += 1
+        worksheet.write(row, 0, "Total", bold)
+        worksheet.write(row, 2, total_wins, bold)
+        worksheet.write(row, 3, total_games-total_wins, bold)
+        worksheet.write(row, 4, self.compute_win_percentage(total_wins,total_games), bold)
+
+        for card_total in total_card_evaluation:
+            row += 1
+            worksheet.write(row, 5, card_total['card'])
+            worksheet.write(row, 6, card_total['times played'])
+            worksheet.write(row, 7, card_total['number of wins with card'])
+            worksheet.write(row, 8,
+                            card_total['number of games with card'] - card_total['number of wins with card'])
+            worksheet.write(row, col + 9, self.compute_win_percentage(card_total['number of wins with card'],
+                                                                      card_total['number of games with card']))
         workbook.close()
 
     def load_decktypes_from_json(self, path: str) -> list:
